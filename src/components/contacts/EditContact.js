@@ -1,26 +1,39 @@
 import React, { Component } from "react";
-import {Consumer} from '../../context';
-import TextInputGroup from './../layout/TextInputGroup'
+import { Consumer } from "../../context";
+import TextInputGroup from "./../layout/TextInputGroup";
 
 import axios from "axios";
 
-class AddContact extends Component {
+class EditContact extends Component {
   state = {
     name: "",
     email: "",
     phone: "",
-    errors:{}
+    errors: {},
   };
 
-  onChange = (e) => this.setState({[e.target.name]: e.target.value})
+  async componentDidMount(){
+      const {id} = this.props.match.params;
+      const res = await axios.get(`http://jsonplaceholder.typicode.com/users/${id}`)
+
+      const contact =   res.data;
+
+      this.setState({
+          name: contact.name,
+          email: contact.email,
+          phone: contact.phone,
+      })
+  }
+
+  onChange = (e) => this.setState({ [e.target.name]: e.target.value });
 
   onSubmit = async (dispatch, e) => {
     e.preventDefault();
-    const {name, email, phone} = this.state;
+    const { name, email, phone } = this.state;
 
     //Check fields
-    if(name === ''){
-      this.setState({errors:{name:'Name is required'}});
+    if (name === "") {
+      this.setState({ errors: { name: "Name is required" } });
       return;
     }
     if (email === "") {
@@ -31,17 +44,17 @@ class AddContact extends Component {
       this.setState({ errors: { phone: "Phone is required" } });
       return;
     }
-    const newContact = {
+    const updContact = {
       name,
       email,
       phone,
-      errors:{}
     }
-    const res = await axios
-      .post("http://jsonplaceholder.typicode.com/users",newContact);
+    const {id} =  this.props.match.params;
 
-      dispatch({ type: "ADD_CONTACT", payload: res.data });
-    
+
+    const res = await axios.put(`http://jsonplaceholder.typicode.com/users/${id}`,updContact);
+    dispatch({type:'UPDATE_CONTACT',payload:res.data})
+
 
     //Clear State
     this.setState({
@@ -50,19 +63,19 @@ class AddContact extends Component {
       phone: "",
     });
 
-    this.props.history.push('/')
-  }
+    this.props.history.push("/");
+  };
 
   render() {
-    const {name , email, phone, errors} = this.state;
+    const { name, email, phone, errors } = this.state;
 
-    return(
-      <Consumer >
-        {value => {
-          const {dispatch} = value;
+    return (
+      <Consumer>
+        {(value) => {
+          const { dispatch } = value;
           return (
             <div className="card mb-3">
-              <div className="card-header">Add Contact</div>
+              <div className="card-header">Edit Contact</div>
               <div className="card-body">
                 <form onSubmit={this.onSubmit.bind(this, dispatch)}>
                   <TextInputGroup
@@ -93,7 +106,7 @@ class AddContact extends Component {
                   />
                   <input
                     type="submit"
-                    value="Add Contact"
+                    value="Update Contact"
                     className="btn btn-light btn-block"
                   />
                 </form>
@@ -102,10 +115,8 @@ class AddContact extends Component {
           );
         }}
       </Consumer>
-    )
-
-    ;
+    );
   }
 }
 
-export default AddContact;
+export default EditContact;
